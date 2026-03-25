@@ -5,10 +5,24 @@ import pandas as pd
 st.set_page_config(page_title="Production Detail Viewer", layout="wide")
 
 # 1. Load the Data
+import os
+
 @st.cache_data
 def load_data():
-    # Load raw data
-    df = pd.read_csv('Excel.xlsx - Main Sheet.csv', header=None)
+    # Check if Excel file exists
+    file_path = 'Excel.xlsx'
+    if not os.path.exists(file_path):
+        st.error(f"❌ Data file not found! Please upload 'Excel.xlsx' to your repository.")
+        st.stop()
+    
+    # Load raw data from Excel
+    try:
+        # First try 'Main Sheet'
+        df = pd.read_excel(file_path, sheet_name='Main Sheet', header=None)
+    except:
+        # If 'Main Sheet' not found, use first available sheet
+        xl = pd.ExcelFile(file_path)
+        df = pd.read_excel(file_path, sheet_name=xl.sheet_names[0], header=None)
     
     # Extract Row 2 for sub-headings (Column names)
     col_names = df.iloc[1].values
@@ -19,6 +33,12 @@ def load_data():
     return data
 
 df = load_data()
+
+# Check if data loaded successfully
+if df is None or df.empty:
+    st.error("⚠️ No data found! Please ensure 'Excel.xlsx' file is uploaded to your repository.")
+    st.info("📝 Steps to fix:\n1. Upload the Excel file to your GitHub repository\n2. Make sure the file name matches: 'Excel.xlsx'\n3. Re-deploy the app")
+    st.stop()
 
 # 2. Sidebar Filter (Detail Section Selection)
 st.sidebar.header("Filter Details")
